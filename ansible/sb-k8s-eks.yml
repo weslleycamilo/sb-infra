@@ -1,0 +1,15 @@
+---
+- name: EKS
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: True
+
+  vars_files:
+    - "vars/k8s-cluster/eks-cloud-{{ env }}.yml"
+
+  environment:
+    K8S_AUTH_KUBECONFIG: "{{ eks_client_kubeconfig_file }}"
+
+  roles:
+    - role: eks.sb
+      tags: launch

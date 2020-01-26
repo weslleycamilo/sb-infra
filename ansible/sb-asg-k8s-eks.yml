@@ -6,7 +6,6 @@
   gather_facts: true
 
   vars:
-      #env: prod
       eks_prefix: eks-
       scaling_version: 202001261129
 

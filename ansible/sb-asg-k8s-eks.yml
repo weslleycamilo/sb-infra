@@ -10,7 +10,7 @@
       scaling_version: 202001261129
 
   vars_files:
-    - "vars/k8s-cluster/eks-cloud-{{ env }}.yml"
+    - "vars/k8s-cluster/eks-sb-{{ env }}.yml"
 
   vars_prompt:
     - name: "asg_var"

@@ -15,7 +15,7 @@ eks-dependencies:
 .PHONY: eks-launcher
 eks-launcher: eks-dependencies
 	$(VENV)/bin/ansible-playbook sb-k8s-eks.yml -D -e env=$(EKS_ENV)
-	aws eks update-kubeconfig --name cloud-${EKS_ENV}
+	aws eks update-kubeconfig --name sb-${EKS_ENV}
 	$(MAKE) eks-launch-asg
 	$(MAKE) deploy-helm-charts
 

@@ -1,0 +1,53 @@
+---
+
+# Global
+
+global_aws_tags:
+  - "sb:role": kubernetes
+  - env: test
+  - team: cloud
+
+## Used on k8s-eks role config
+
+# AWS account id
+eks_aws_account_id: XXXXXXXX19181Y
+
+# Cluster name
+eks_cluster_name: sb-test
+
+
+# AWS account users - name.lastname
+eks_iam_users:
+  - weslley.azevedo
+
+# AWS EC2 IAM
+
+eks_iam_role_arn_master: arn:aws:iam::{{ eks_aws_account_id }}:role/eks-role-sb-test-master
+eks_iam_role_arn_worker: arn:aws:iam::{{ eks_aws_account_id }}:role/eks-role-sb-test-worker
+eks_iam_instance_profile_arn: arn:aws:iam::{{ eks_aws_account_id }}:instance-profile/eks-role-sb-test-worker
+
+
+# AWS VPC && Security
+
+eks_vpc_id: vpc-xxxxxxxxxxx
+eks_vpc_subnets_id:
+  - subnet-yyyyyyyyyyyyyyyyy
+  - subnet-xxxxxxxxxxxxxxxxx
+eks_vpc_sgs_id_master:
+  - sg-xxxxxxxxxxx
+eks_vpc_sgs_id_worker:
+  - sg-xxxxxxxxxxxx
+
+# AWS EC2 ASG
+eks_ec2_userdata: "{{ lookup('file', './userdata.sh') }}"
+
+
+# Global CS AMI
+cs_ami_create: false
+
+# Global CS LC
+latest_ami: ami-087a82f6b78a07557 # Amazon Linux Tue, 17 Dec 2019 01:50:36 GMT
+
+
+
+eks_client_kubectl_path: /usr/local/bin/kubectl

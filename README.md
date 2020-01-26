@@ -9,7 +9,7 @@
 - run `make eks-launcher` to create k8s cluster, create AWS ASG with two servers and deploy the super mario 
 
 
-#### IMPROVEMENTS TODO.
+#### IMPROVEMENTS TO DO.
 
 - create/use ansible role to create the security group.
 - create/use ansible role to create the iam roles with right policies.

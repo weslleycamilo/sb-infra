@@ -4,7 +4,7 @@
 VENV := ./venv
 EKS_ENV := test
 ASG_FILE := aws-asg-general-spot
-CHART_FILE := sb-alb-ingress-controller
+CHART_FILE := bootstrap
 
 .PHONY: eks-dependencies
 eks-dependencies:
@@ -26,3 +26,11 @@ eks-launch-asg: eks-dependencies
 .PHONY: deploy-helm-charts
 deploy-helm-charts: eks-dependencies
 	$(VENV)/bin/ansible-playbook sb-helm-charts.yml -e env=$(EKS_ENV) -e "chart_var=$(CHART_FILE)"
+
+
+######Attetion: Use it just in case of total loss of K8S########
+.PHONY: eks-disaster-recovery
+eks-disaster-recovery: eks-dependencies
+	$(MAKE) eks-launcher
+	$(MAKE) eks-launch-asg ASG_FILE=*
+	$(MAKE) deploy-helm-charts CHART_FILE=*

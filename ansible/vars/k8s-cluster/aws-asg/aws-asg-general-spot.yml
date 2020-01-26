@@ -1,0 +1,108 @@
+---
+# AWS EC2 ASG
+
+asg_ec2_tags_asg_general_spot:
+  - Name: "{{ eks_prefix }}{{ eks_cluster_name }}-worker-general-spot"
+  - "{'kubernetes.io/cluster/{{ eks_cluster_name }}': 'owned'}"
+  - sb/worker-group: general
+  - "k8s.io/cluster-autoscaler/enabled": 'owned'
+  - "{'k8s.io/cluster-autoscaler/{{ eks_cluster_name }}': 'owned'}"
+
+worker_labels_general: []
+
+eks_ec2_userdata_group_general: |
+  # Applying custom labels to the node
+  until kubectl --kubeconfig=/var/lib/kubelet/kubeconfig get nodes $(hostname) > /dev/null 2>&1
+  do
+      sleep 1
+  done
+  kubectl --kubeconfig=/var/lib/kubelet/kubeconfig \
+    label nodes $(hostname) \
+    {{ worker_labels_general | join(' ') }}
+  /opt/aws/bin/cfn-signal --exit-code $? \
+      --stack  ${AWS::StackName} \
+      --resource NodeGroup  \
+      --region ${AWS::Region}
+
+# AWS EC2 Instance details
+
+cs_lc_instance_type: t3.medium
+cs_lc_spot_price: 0.0208
+cs_asg_availability_zones:
+  - us-east-1d
+
+# Scaling policies (generic)
+
+custom_step_policies_spot:
+  - name: scale-up
+    policy_type: StepScaling
+    adjustment_type: ChangeInCapacity
+    metric_aggregation_type: Average
+    estimated_warmup: 90
+    alarm_spec:
+      metric: "CPUUtilization"
+      name: CPUUtilization-High
+      statistic: "Average"
+      comparison: ">="
+      threshold: 50
+      minutes: 3
+    step_adjustments:
+        - "ScalingAdjustment": 1
+          "MetricIntervalLowerBound": 0
+          "MetricIntervalUpperBound": 15
+        - "ScalingAdjustment": 2
+          "MetricIntervalLowerBound": 15
+          "MetricIntervalUpperBound": 25
+        - "ScalingAdjustment": 4
+          "MetricIntervalLowerBound": 25
+          "MetricIntervalUpperBound": 35
+        - "ScalingAdjustment": 8
+          "MetricIntervalLowerBound": 35
+  - name: scale-down
+    state: present
+    policy_type: StepScaling
+    adjustment_type: ChangeInCapacity
+    metric_aggregation_type: Average
+    estimated_warmup: 120
+    alarm_spec:
+      metric: "CPUUtilization"
+      name: CPUUtilization-Low
+      statistic: "Average"
+      comparison: "<="
+      threshold: 30
+      minutes: 10
+    step_adjustments:
+        - "ScalingAdjustment": -1
+          "MetricIntervalLowerBound": -10
+          "MetricIntervalUpperBound": 0
+        - "ScalingAdjustment": -2
+          "MetricIntervalUpperBound": -10
+
+# Scaling Groups
+
+cs_scaling_groups:
+  - asg_name: "{{ eks_prefix }}{{ eks_cluster_name }}-worker-cloud-general-{{ scaling_version }}-spot-{{ cs_lc_instance_type }}"
+    lc_name: "{{ eks_prefix }}{{ eks_cluster_name }}-worker-cloud-general-{{ scaling_version }}-spot-{{ cs_lc_instance_type }}"
+    lc_spec:
+      instance_type: "{{ cs_lc_instance_type }}"
+      security_groups: "{{ eks_vpc_sgs_id_worker }}"
+      instance_monitoring: yes
+      instance_profile_name: "{{ eks_iam_instance_profile_arn }}"
+      ebs_optimized: yes
+      image_id: "{{ latest_ami }}"
+      spot_price: "{{ cs_lc_spot_price }}"
+      vpc_id: "{{ eks_vpc_id }}"
+      user_data: |
+        #!/bin/bash
+        set -o xtrace
+        /etc/eks/bootstrap.sh {{ eks_cluster_name }}
+        {{ eks_ec2_userdata }}
+        {{ eks_ec2_userdata_group_general }}
+    asg_spec:
+      min_size: 2
+      max_size: 2
+      vpc_zone_identifier: "{{ eks_vpc_subnets_id }}"
+      tags: "{{ global_aws_tags + asg_ec2_tags_asg_general_spot }}"
+      wait_for_instances: "no"
+    scaling_policies_type: step
+    scaling_policies_spec: "{{ custom_step_policies_spot }}"

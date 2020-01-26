@@ -1,0 +1,83 @@
+---
+helm_charts:
+  - chart:
+      name: prometheus-operator
+      version: prometheus-operator
+      source:
+        type: git
+        location: https://github.com/helm/charts.git
+        path: stable/prometheus-operator
+    state: present
+    name: prometheus-operator
+    namespace: default
+    values:
+      grafana:
+        enabled: false 
+      prometheus:
+        service:
+          type: NodePort
+          nodePort: 30090
+  - chart:
+      name: aws-alb-ingress-controller
+      version: 0.1.12
+      source:
+        type: repo
+        location: http://storage.googleapis.com/kubernetes-charts-incubator
+    state: present
+    name: sb-alb-ingress-controller
+    namespace: default
+    values:
+      awsRegion: us-east-1
+      awsVpcID: vpc-1122667a
+      clusterName: sb-test
+  - chart:
+      name: sb-ingresss
+      version: sb-ingresss
+      source:
+        type: git
+        location: git@github.com:weslleycamilo/charts.git
+        path: stable/k8s-ingress-chart
+    state: present
+    name: sb-ingress
+    namespace: default 
+    values:
+      ingress:
+        annotations: #https://kubernetes-sigs.github.io/aws-alb-ingress-controller/guide/ingress/annotation/#scheme
+          alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-eas-yyyyyyyyyyyyyyyyyy
+          alb.ingress.kubernetes.io/healthcheck-path: /status
+          alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+          alb.ingress.kubernetes.io/scheme: internal #internet-facing
+          alb.ingress.kubernetes.io/security-groups: sg-xxxxxxxxxxxxx
+          alb.ingress.kubernetes.io/subnets: subnet-xxxxxxxx, subnet-yyyyyyyyyyy
+          alb.ingress.kubernetes.io/target-type: instance
+          kubernetes.io/ingress.class: alb
+        hosts:
+          - host: teste-sb.sb.internal
+            paths:
+              - /*
+            serviceName: sb-supermario
+            servicePort: 80  
+          - host: prometheus.sb.internal
+            paths:
+              - /*
+            serviceName: prometheus-operator-prometheus
+            servicePort: 9090                 
+  - chart:
+      name: sb-supermario
+      version: sb-supermario
+      source:
+        type: git
+        location: git@github.com:weslleycamilo/charts.git
+        path: dev/generic-chart
+    state: present
+    name: sb-supermario
+    namespace: default 
+    values:
+      image:
+        repository: bharathshetty4/supermario
+      appPort: 8080
+      deployment:
+        service:
+          type: NodePort
+          port: 80
+              

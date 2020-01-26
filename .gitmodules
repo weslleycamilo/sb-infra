@@ -1,3 +1,6 @@
 [submodule "ansible/roles/eks.sb"]
 	path = ansible/roles/eks.sb
 	url = git@github.com:chaordic/ansible-role-eks.git
+[submodule "ansible/roles/ec2-scaling.sb"]
+	path = ansible/roles/ec2-scaling.sb
+	url = git@github.com:chaordic/ansible-role-cloud-scaling.git

@@ -4,6 +4,7 @@
 VENV := ./venv
 EKS_ENV := test
 ASG_FILE := aws-asg-general-spot
+CHART_FILE := sb-alb-ingress-controller
 
 .PHONY: eks-dependencies
 eks-dependencies:
@@ -15,7 +16,13 @@ eks-dependencies:
 eks-launcher: eks-dependencies
 	$(VENV)/bin/ansible-playbook sb-k8s-eks.yml -D -e env=$(EKS_ENV)
 	aws eks update-kubeconfig --name cloud-${EKS_ENV}
+	$(MAKE) eks-launch-asg
+	$(MAKE) deploy-helm-charts
 
 .PHONY: eks-launch-asg
 eks-launch-asg: eks-dependencies
 	$(VENV)/bin/ansible-playbook sb-asg-k8s-eks.yml -e env=$(EKS_ENV) -e "asg_var=$(ASG_FILE)"
+
+.PHONY: deploy-helm-charts
+deploy-helm-charts: eks-dependencies
+	$(VENV)/bin/ansible-playbook sb-helm-charts.yml -e env=$(EKS_ENV) -e "chart_var=$(CHART_FILE)"

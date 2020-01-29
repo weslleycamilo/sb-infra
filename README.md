@@ -13,5 +13,4 @@
 
 - create/use ansible role to create the security group.
 - create/use ansible role to create the iam roles with right policies.
-- anti-affinity to the pods so it can run one per node.
 - update the prometheus-operator helm chart so we can expose the grafana as we did with prometheus.

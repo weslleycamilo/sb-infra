@@ -76,8 +76,18 @@ helm_charts:
       image:
         repository: bharathshetty4/supermario
       appPort: 8080
+      replicaCount: 6
       deployment:
         service:
           type: NodePort
           port: 80
-              
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - sb-supermario
+              topologyKey: "kubernetes.io/hostname"       
